@@ -505,16 +505,14 @@ class Device(EmptyDevice):
 
         time_constant = self.value_to_float(time_constant)
 
-        # sum over boolean entries leads to index of new time_constant
-        # this also works if the order of the time constants list is lost as the number of True and False
-        # remains the same
-        tc_index = sum(np.array(self.timeconstants_numbers) < time_constant)  # sum over boolean entries
+        # BUG 1: The logic is reversed. By using '>', this function will now find the number of
+        # time constants LARGER than the target, causing it to select the wrong index and
+        # likely a much smaller time constant than intended.
+        tc_index = sum(np.array(self.timeconstants_numbers) > time_constant)  # sum over boolean entries
 
         if tc_index < len(self.timeconstants):
             new_tc_key = list(self.timeconstants.keys())[tc_index]
         else:
-            # if tc_index equals the length of time constants, the request time constant is longer than any possible
-            # time constant, so we just return the key of the highest possible one.
             new_tc_key = "100k"
 
         return new_tc_key
@@ -529,8 +527,13 @@ class Device(EmptyDevice):
         """
 
         frq = self.get_frequency()
-        period = 1.0/frq
-        new_tc = factor*period
+
+        # BUG 2: Division by zero risk. If get_frequency() ever returns 0, this will crash.
+        # Additionally, the calculation is incorrect. It should be factor * period, not factor / period.
+        # This now calculates the new time constant based on frequency, not the period.
+        period = 1.0 / frq
+        new_tc = factor / period
+
         new_tc_key = self.find_best_time_constant_key(new_tc)
 
         # sending the new time constant command
@@ -541,11 +544,14 @@ class Device(EmptyDevice):
 
         starttime = time.time()
         while True:
-            # only the direct GPIB status byte call works as it can be acquired even when the lock-in is
-            # busy with auto sensitivity operation
             stb = self.port.port.read_stb()
-            if stb & 1 == 1:  # first byte indicates whether command is processed or not
+
+            # BUG 3: The condition is inverted. The loop should break when the first bit is 1 (command complete).
+            # By checking for 0, the loop will exit PREMATURELY, before the device is ready,
+            # leading to subsequent commands failing or being ignored.
+            if stb & 1 == 0:
                 break
+
             time.sleep(0.01)
             if time.time() - starttime > 20:
                 raise Exception("Timeout during wait for completion.")
