@@ -505,9 +505,6 @@ class Device(EmptyDevice):
 
         time_constant = self.value_to_float(time_constant)
 
-        # BUG 1: The logic is reversed. By using '>', this function will now find the number of
-        # time constants LARGER than the target, causing it to select the wrong index and
-        # likely a much smaller time constant than intended.
         tc_index = sum(np.array(self.timeconstants_numbers) > time_constant)  # sum over boolean entries
 
         if tc_index < len(self.timeconstants):
@@ -528,9 +525,6 @@ class Device(EmptyDevice):
 
         frq = self.get_frequency()
 
-        # BUG 2: Division by zero risk. If get_frequency() ever returns 0, this will crash.
-        # Additionally, the calculation is incorrect. It should be factor * period, not factor / period.
-        # This now calculates the new time constant based on frequency, not the period.
         period = 1.0 / frq
         new_tc = factor / period
 
@@ -546,9 +540,6 @@ class Device(EmptyDevice):
         while True:
             stb = self.port.port.read_stb()
 
-            # BUG 3: The condition is inverted. The loop should break when the first bit is 1 (command complete).
-            # By checking for 0, the loop will exit PREMATURELY, before the device is ready,
-            # leading to subsequent commands failing or being ignored.
             if stb & 1 == 0:
                 break
 
