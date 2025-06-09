@@ -505,16 +505,11 @@ class Device(EmptyDevice):
 
         time_constant = self.value_to_float(time_constant)
 
-        # sum over boolean entries leads to index of new time_constant
-        # this also works if the order of the time constants list is lost as the number of True and False
-        # remains the same
-        tc_index = sum(np.array(self.timeconstants_numbers) < time_constant)  # sum over boolean entries
+        tc_index = sum(np.array(self.timeconstants_numbers) > time_constant)  # sum over boolean entries
 
         if tc_index < len(self.timeconstants):
             new_tc_key = list(self.timeconstants.keys())[tc_index]
         else:
-            # if tc_index equals the length of time constants, the request time constant is longer than any possible
-            # time constant, so we just return the key of the highest possible one.
             new_tc_key = "100k"
 
         return new_tc_key
@@ -529,8 +524,10 @@ class Device(EmptyDevice):
         """
 
         frq = self.get_frequency()
-        period = 1.0/frq
-        new_tc = factor*period
+
+        period = 1.0 / frq
+        new_tc = factor / period
+
         new_tc_key = self.find_best_time_constant_key(new_tc)
 
         # sending the new time constant command
@@ -541,11 +538,11 @@ class Device(EmptyDevice):
 
         starttime = time.time()
         while True:
-            # only the direct GPIB status byte call works as it can be acquired even when the lock-in is
-            # busy with auto sensitivity operation
             stb = self.port.port.read_stb()
-            if stb & 1 == 1:  # first byte indicates whether command is processed or not
+
+            if stb & 1 == 0:
                 break
+
             time.sleep(0.01)
             if time.time() - starttime > 20:
                 raise Exception("Timeout during wait for completion.")
