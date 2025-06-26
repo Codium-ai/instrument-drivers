@@ -33,26 +33,7 @@ from __future__ import annotations
 
 import numpy as np
 from pysweepme.EmptyDeviceClass import EmptyDevice
-
-
-class Device(EmptyDevice):
-    """Driver class for the HP 4284A LCRmeter."""
-    def __init__(self) -> None:
-        """Initialize the driver parameter."""
-        EmptyDevice.__init__(self)
-
-        self.shortname = "HP4284A"
-
-        self.port_manager = True
-        self.port_types = ["GPIB"]
-        self.port_properties = {
-            "timeout": 20,
-        }
-
-        # Parameters to restore the users device setting
-        self.commands_to_restore = [
-            "FUNC:IMP",  # Operating mode
-            "FUNC:IMP:RANG:AUTO",  # Auto range on/off
+:AUTO",  # Auto range on/off
             "DISP:LINE",  # Display line
             # "VOLT",                     # Oscillator strength
             # "CURR",                     # current oscillator
