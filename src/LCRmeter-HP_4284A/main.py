@@ -40,25 +40,7 @@ class Device(EmptyDevice):
     def __init__(self) -> None:
         """Initialize the driver parameter."""
         EmptyDevice.__init__(self)
-
-        self.shortname = "HP4284A"
-
-        self.port_manager = True
-        self.port_types = ["GPIB"]
-        self.port_properties = {
-            "timeout": 20,
-        }
-
-        # Parameters to restore the users device setting
-        self.commands_to_restore = [
-            "FUNC:IMP",  # Operating mode
-            "FUNC:IMP:RANG:AUTO",  # Auto range on/off
-            "DISP:LINE",  # Display line
-            # "VOLT",                     # Oscillator strength
-            # "CURR",                     # current oscillator
-            # "BIAS:VOLT",                # bias level
-            "APER",  # average
-            "FREQ",  # Frequency
+  # Frequency
             "AMPL:ALC",  # Automatic level control
             "CORR:LENG",  # Correction length
             "FUNC:IMP:RANG",  # Range value -> must be last and
